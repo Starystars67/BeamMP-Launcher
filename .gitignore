@@ -13,3 +13,4 @@ bin/
 compile_commands.json
 key
 out/
+build-macos/

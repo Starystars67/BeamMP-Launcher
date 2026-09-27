@@ -14,7 +14,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <shellapi.h>
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
 #include <cstring>
 #include <errno.h>
 #include <netdb.h>
@@ -466,9 +466,9 @@ int Handle(EXCEPTION_POINTERS* ep) {
 
             CoreMain();
 
-#if not defined(__MINGW32__) and not defined(__linux__)
+#if not defined(__MINGW32__) and not (defined(__linux__) || defined(__APPLE__))
         } __except (Handle(GetExceptionInformation())) { }
-#elif not defined(__MINGW32__) and defined(__linux__)
+#elif not defined(__MINGW32__) and (defined(__linux__) || defined(__APPLE__))
     }
     catch (...) {
         except("(Core) Code : " + std::string(strerror(errno)));

@@ -9,7 +9,7 @@
 #include "Utils.h"
 #if defined(_WIN32)
 #include <shlobj_core.h>
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
 #include "vdf_parser.hpp"
 #include <pwd.h>
 #include <unistd.h>
@@ -37,7 +37,7 @@ void lowExit(int code) {
 beammp_fs_string GetGameDir() {
 #if defined(_WIN32)
     return GameDir.substr(0, GameDir.find_last_of('\\'));
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
     return GameDir.substr(0, GameDir.find_last_of('/'));
 #endif
 }
@@ -226,7 +226,7 @@ void LegitimacyCheck() {
     }
 
     delete[] appDataPath;
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
     struct passwd* pw = getpwuid(getuid());
     std::filesystem::path homeDir = pw->pw_dir;
 
@@ -235,7 +235,8 @@ void LegitimacyCheck() {
         ".steam/root/steamapps", // default
         ".steam/steam/steamapps", // Legacy Steam installations
         ".var/app/com.valvesoftware.Steam/.steam/root/steamapps", // flatpak
-        "snap/steam/common/.local/share/Steam/steamapps" // snap
+        "snap/steam/common/.local/share/Steam/steamapps", // snap
+        "Library/Application Support/Steam/steamapps" // macOS (game run through Wine/CrossOver)
     };
 
     std::filesystem::path steamappsPath;

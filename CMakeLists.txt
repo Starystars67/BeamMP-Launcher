@@ -31,7 +31,14 @@ elseif (UNIX)
     find_package(ZLIB REQUIRED)
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-            ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto CURL::libcurl)
+            ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto CURL::libcurl nlohmann_json::nlohmann_json)
+    # header only; take just the include path so a zlib-enabled httplib package doesn't clash with the bundled miniz
+    get_target_property(HTTPLIB_INCLUDE_DIRS httplib::httplib INTERFACE_INCLUDE_DIRECTORIES)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${HTTPLIB_INCLUDE_DIRS})
+    if (APPLE)
+        # httplib reads the system keychain certificates for TLS
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreFoundation" "-framework Security")
+    endif(APPLE)
 else(WIN32) #MINGW
     add_definitions("-D_WIN32_WINNT=0x0600")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -s --static")

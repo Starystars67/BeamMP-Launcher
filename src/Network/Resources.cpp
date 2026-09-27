@@ -16,7 +16,7 @@
 
 #if defined(_WIN32)
 #include <ws2tcpip.h>
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
 #include <arpa/inet.h>
 #include <cstring>
 #include <errno.h>
@@ -465,7 +465,7 @@ void NewSyncResources(SOCKET Sock, const std::string& Mods, const std::vector<Mo
                     fs::create_directories(GetGamePath() / beammp_wide("mods/multiplayer"));
                 }
                 auto modname = ModInfoIter->FileName;
-#if defined(__linux__)
+#if (defined(__linux__) || defined(__APPLE__))
                 // Linux version of the game doesnt support uppercase letters in mod names
                 for (char& c : modname) {
                     c = ::tolower(c);
@@ -500,7 +500,7 @@ void NewSyncResources(SOCKET Sock, const std::string& Mods, const std::vector<Mo
 
                 auto modname = ModInfoIter->FileName;
 
-#if defined(__linux__)
+#if (defined(__linux__) || defined(__APPLE__))
                 // Linux version of the game doesnt support uppercase letters in mod names
                 for (char& c : modname) {
                     c = ::tolower(c);
@@ -584,7 +584,7 @@ void NewSyncResources(SOCKET Sock, const std::string& Mods, const std::vector<Mo
             }
 
 // Linux version of the game doesnt support uppercase letters in mod names
-#if defined(__linux__)
+#if (defined(__linux__) || defined(__APPLE__))
             for (char& c : FName) {
                 c = ::tolower(c);
             }
@@ -698,7 +698,7 @@ void SyncResources(SOCKET Sock) {
                         fs::create_directories(GetGamePath() / beammp_wide("mods/multiplayer"));
                     }
                     auto modname = PathToSaveTo.filename().string();
-#if defined(__linux__)
+#if (defined(__linux__) || defined(__APPLE__))
                     // Linux version of the game doesnt support uppercase letters in mod names
                     for (char& c : modname) {
                         c = ::tolower(c);
@@ -758,7 +758,7 @@ void SyncResources(SOCKET Sock) {
             }
 
 // Linux version of the game doesnt support uppercase letters in mod names
-#if defined(__linux__)
+#if (defined(__linux__) || defined(__APPLE__))
             for (char& c : FName) {
                 c = ::tolower(c);
             }
