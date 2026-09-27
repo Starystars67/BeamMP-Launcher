@@ -8,13 +8,16 @@
 #include "Utils.h"
 #if defined(_WIN32)
 #include <shlobj.h>
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
 #include "vdf_parser.hpp"
 #include <pwd.h>
 #include <spawn.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#if defined(__APPLE__)
+extern char** environ; // not declared by unistd.h on macOS
+#endif
 #endif
 
 #include "Logger.h"
@@ -115,13 +118,21 @@ std::filesystem::path GetGamePath() {
     Path /= Utils::ToWString("current");
     return Path;
 }
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
 std::filesystem::path GetGamePath() {
     // Right now only steam is supported
     struct passwd* pw = getpwuid(getuid());
     std::string homeDir = pw->pw_dir;
 
     std::string Path = homeDir + "/.local/share/BeamNG/BeamNG.drive/";
+    // same meaning as on Windows: the folder that contains "current"
+    if (options.user_path) {
+        if (std::filesystem::exists(options.user_path)) {
+            Path = std::string(options.user_path) + "/";
+            debug("Using custom user folder path: " + Path);
+        } else
+            warn("Invalid or non-existent path (" + std::string(options.user_path) + ") specified using --user-path, skipping");
+    }
     std::string Ver = CheckVer(GetGameDir());
     Ver = Ver.substr(0, Ver.find('.', Ver.find('.') + 1));
     Path += "current/";
@@ -172,7 +183,7 @@ void StartGame(std::wstring Dir) {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     exit(2);
 }
-#elif defined(__linux__)
+#elif (defined(__linux__) || defined(__APPLE__))
 void StartGame(std::string Dir) {
     std::string filename = (Dir + "/BinLinux/BeamNG.drive.x64");
     std::vector<const char*> argv;

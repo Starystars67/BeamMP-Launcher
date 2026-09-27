@@ -10,7 +10,7 @@
 #include <vector>
 #include <zconf.h>
 #include <zlib.h>
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 #include <cstring>
 #endif
 

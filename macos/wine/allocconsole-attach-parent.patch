@@ -1,0 +1,20 @@
+--- a/dlls/kernelbase/console.c
++++ b/dlls/kernelbase/console.c
+@@ -504,6 +504,17 @@
+  */
+ BOOL WINAPI AllocConsole(void)
+ {
++    WCHAR attach[8];
++
++    /* WINE_ALLOCCONSOLE_ATTACH_PARENT=1: GUI programs that call AllocConsole (e.g. BeamNG -console) attach to
++     * the parent's console instead, so when started from a terminal (Wine's unix console) the output and input
++     * go through the real terminal, which renders VT sequences, rather than a new conhost window. */
++    if (GetEnvironmentVariableW( L"WINE_ALLOCCONSOLE_ATTACH_PARENT", attach, ARRAY_SIZE(attach) ) &&
++        attach[0] == '1' && AttachConsole( ATTACH_PARENT_PROCESS ))
++    {
++        TRACE( "attached to parent console instead of allocating one\n" );
++        return TRUE;
++    }
+     return alloc_console( FALSE );
+ }
+ 

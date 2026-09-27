@@ -1,0 +1,16 @@
+{
+    "file_format_version": "1.2.0",
+    "layer": {
+        "name": "VK_LAYER_BEAMNG_macos_compat",
+        "type": "GLOBAL",
+        "library_path": "./libbmcompat_layer.dylib",
+        "api_version": "1.4.350",
+        "implementation_version": "1",
+        "description": "Emulates sparseBinding/sparseResidencyBuffer/drawIndirectCount/robustBufferAccess2 on MoltenVK for BeamNG",
+        "functions": {
+            "vkNegotiateLoaderLayerInterfaceVersion": "bmcompat_NegotiateLoaderLayerInterfaceVersion",
+            "vkGetInstanceProcAddr": "bmcompat_GetInstanceProcAddr",
+            "vkGetDeviceProcAddr": "bmcompat_GetDeviceProcAddr"
+        }
+    }
+}

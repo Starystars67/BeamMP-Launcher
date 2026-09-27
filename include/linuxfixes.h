@@ -22,4 +22,9 @@
 
 #define ZeroMemory(mem, len) memset(mem, 0, len)
 
+// libstdc++ maps __try to try for us on Linux, libc++ (macOS) does not
+#if defined(__APPLE__) && !defined(__try)
+#define __try try
+#endif
+
 #endif

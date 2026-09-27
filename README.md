@@ -4,6 +4,10 @@ The launcher is the way we communitcate to outside the game, it does a few autom
 
 ## [Getting started](https://docs.beammp.com/game/getting-started/)
 
+## [Running on macOS](README-macOS.md)
+
+Native launcher + the game through Wine, Apple Silicon only for now. See [README-macOS.md](README-macOS.md).
+
 ## License
 
 BeamMP Launcher, a launcher for the BeamMP mod for BeamNG.drive
