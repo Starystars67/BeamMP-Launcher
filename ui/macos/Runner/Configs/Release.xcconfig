@@ -1,0 +1,6 @@
+#include "../../Flutter/Flutter-Release.xcconfig"
+#include "Warnings.xcconfig"
+
+// The engine is built for Apple Silicon only (see README-macOS.md), so the app is too.
+ARCHS = arm64
+ONLY_ACTIVE_ARCH = NO

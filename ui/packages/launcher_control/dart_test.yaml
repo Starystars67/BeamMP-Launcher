@@ -1,0 +1,3 @@
+tags:
+  integration:
+    description: Needs the real engine binary (BEAMMP_ENGINE).

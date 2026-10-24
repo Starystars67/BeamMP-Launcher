@@ -1,0 +1,276 @@
+{
+  "@@locale": "en",
+  "appTitle": "BeamMP Launcher",
+  "navHome": "Play",
+  "navLogs": "Logs",
+  "navAccount": "Account",
+  "navSettings": "Settings",
+  "startupTitle": "Getting ready",
+  "startupConnecting": "Starting the launcher engine…",
+  "startupUpdating": "Checking for launcher updates…",
+  "startupPreparing": "Preparing BeamNG.drive for multiplayer…",
+  "startupRetry": "Try again",
+  "startupFailedTitle": "The launcher engine stopped",
+  "startupFailedNotFound": "The launcher engine could not be found. Reinstall BeamMP or set BEAMMP_ENGINE.",
+  "startupFailedLost": "The launcher engine stopped unexpectedly.",
+  "startupFailedIncompatible": "This launcher and its engine do not match. Update the launcher.",
+  "startupShowDetails": "Show details",
+  "startupHideDetails": "Hide details",
+  "startupCopyDetails": "Copy details",
+  "homeTitle": "Play",
+  "gameBeamNG": "BeamNG.drive",
+  "gameStateReady": "Ready to play",
+  "gameStateLaunching": "Starting…",
+  "gameStateRunning": "Running",
+  "gameStatePreparing": "Preparing…",
+  "gameStateError": "Something went wrong",
+  "gameStateNotFound": "Game not found",
+  "gameStateExited": "Closed",
+  "actionPlay": "Play",
+  "actionStop": "Stop game",
+  "launchFailed": "Could not start the game: {reason}",
+  "@launchFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "launchNoAnswer": "The launcher engine did not answer. Try again.",
+  "launchArgumentsUnterminated": "The game arguments in Settings have an opening quote without a closing one.",
+  "launchArgumentsTooMany": "There are too many game arguments in Settings.",
+  "launchArgumentsTooLong": "One of the game arguments in Settings is too long.",
+  "logsTitle": "Logs",
+  "logsLevelLabel": "Level: {level}",
+  "@logsLevelLabel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "logsClear": "Clear",
+  "logsLevelDebug": "Debug",
+  "logsLevelInfo": "Info",
+  "logsLevelWarn": "Warnings",
+  "logsLevelError": "Errors",
+  "logsEmpty": "Nothing logged yet.",
+  "logsCopy": "Copy all",
+  "logsCopied": "Copied to the clipboard",
+  "logsFollow": "Follow",
+  "logsCount": "{count} entries",
+  "@logsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountTitle": "Account",
+  "accountSignedOut": "Not signed in",
+  "accountSignedOutHint": "Sign in to use your BeamMP account in the game. You sign in on the BeamMP website, never in the launcher.",
+  "accountSignedInAs": "Signed in as {username}",
+  "@accountSignedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "accountRole": "Role: {role}",
+  "@accountRole": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "accountSignOut": "Sign out",
+  "settingsTitle": "Settings",
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "Follow the system",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsWindow": "Window",
+  "settingsTray": "Show an icon in the menu bar",
+  "settingsTrayUnavailable": "Not available on this system",
+  "settingsLaunchBehavior": "When the game starts",
+  "settingsLaunchAuto": "Hide to the menu bar if it is on, otherwise stay open",
+  "settingsLaunchHide": "Hide to the menu bar",
+  "settingsLaunchStay": "Stay open",
+  "settingsLaunchMinimise": "Minimise",
+  "settingsCloseBehavior": "When the window is closed",
+  "settingsCloseQuit": "Quit the launcher",
+  "settingsCloseToTray": "Keep running in the menu bar",
+  "settingsRestoreWindow": "Bring the window back when the game closes",
+  "settingsNotifications": "Notifications",
+  "settingsNotificationsToggle": "Notify me when the game closes or the engine stops while the window is hidden",
+  "settingsLaunchArguments": "Extra game arguments",
+  "settingsLaunchArgumentsHint": "-console -nosound",
+  "settingsLaunchArgumentsHelp": "Passed to the game every time it starts. Put quotes around values with spaces.",
+  "settingsAdvanced": "Advanced",
+  "settingsShowLogFile": "Show the launcher log file",
+  "settingsShowLogFileMissing": "The log file could not be found",
+  "settingsAbout": "About",
+  "aboutLauncher": "Launcher {version}",
+  "@aboutLauncher": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutEngine": "Engine {version}",
+  "@aboutEngine": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutProtocol": "Control protocol {version}",
+  "@aboutProtocol": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "aboutEngineUnavailable": "The engine is not running",
+  "trayShow": "Show BeamMP Launcher",
+  "trayHide": "Hide BeamMP Launcher",
+  "trayPlay": "Play",
+  "trayOpenLogs": "Open logs",
+  "trayQuit": "Quit",
+  "trayStatus": "{game} - {state}",
+  "@trayStatus": {
+    "placeholders": {
+      "game": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "notifyEngineStoppedTitle": "The launcher engine stopped",
+  "notifyGameClosedTitle": "BeamNG.drive closed",
+  "quitTitle": "Quit the launcher?",
+  "quitGameRunning": "BeamNG.drive is running. If you quit, multiplayer stops working until the launcher is started again.",
+  "quitConfirm": "Quit",
+  "quitCancel": "Stay",
+  "accountSignIn": "Sign in with BeamMP",
+  "accountWaiting": "Finish signing in in your browser",
+  "accountWaitingHint": "A BeamMP page opened in your browser. If it did not, open it yourself.",
+  "accountOpenAgain": "Open the page again",
+  "accountCopyLink": "Copy link",
+  "accountLinkCopied": "Link copied",
+  "accountCancel": "Cancel",
+  "accountExchanging": "Signing you in…",
+  "accountTryAgain": "Try again",
+  "accountFailedCancelled": "The sign-in was cancelled.",
+  "accountFailedTimeout": "The sign-in took too long.",
+  "accountFailedDenied": "The sign-in was declined.",
+  "accountFailedNetwork": "BeamMP could not be reached. Check your connection.",
+  "accountFailedServer": "BeamMP had a problem. Try again in a moment.",
+  "accountFailedRejected": "The sign-in was refused.",
+  "accountFailedExpired": "Your saved sign-in has ended. Please sign in again.",
+  "accountFailedInternal": "Something went wrong while signing in.",
+  "gameStateUnavailable": "Coming soon",
+  "gameStateBusy": "Another game is running",
+  "sessionTitle": "Play together",
+  "sessionHost": "Host a room",
+  "sessionJoin": "Join a room",
+  "sessionConnecting": "Connecting to the relay…",
+  "sessionCancel": "Cancel",
+  "sessionRoomCode": "Room code",
+  "sessionCopyCode": "Copy the code",
+  "sessionCodeCopied": "Code copied",
+  "sessionYouAreHost": "You are the host. Friends join with this code.",
+  "sessionYouJoined": "You joined this room.",
+  "sessionPlayers": "Players: {count}",
+  "@sessionPlayers": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sessionPlayerHost": "host",
+  "sessionPlayerYou": "you",
+  "sessionLeave": "Leave room",
+  "sessionHostTitle": "Host a room",
+  "sessionJoinTitle": "Join a room",
+  "sessionMaxPlayers": "Players allowed",
+  "sessionMaxPlayersHelp": "2 to 32, yourself included",
+  "sessionPassword": "Password (optional)",
+  "sessionCode": "Room code",
+  "sessionCodeHelp": "Six letters and digits, from the host",
+  "sessionCreate": "Create room",
+  "sessionJoinAction": "Join",
+  "sessionOtherGame": "You are in a room for {game} already.",
+  "@sessionOtherGame": {
+    "placeholders": { "game": { "type": "String" } }
+  },
+  "sessionNoAnswer": "The launcher engine did not answer.",
+  "gameSettingsTitle": "{game} settings",
+  "@gameSettingsTitle": {
+    "placeholders": { "game": { "type": "String" } }
+  },
+  "gameSettingsTooltip": "Game settings",
+  "settingsGameFolder": "Game folder",
+  "settingsGameFolderHelp": "Leave empty to find the game automatically.",
+  "settingsStartCommand": "Start command",
+  "settingsStartCommandHelp": "A program or script that starts the game instead of its own executable, for example one that runs it through Wine. It gets the game folder in an environment variable (BEAMNG_DIR, GEARBLOCKS_DIR) and the launch arguments.",
+  "settingsUserFolder": "User folder",
+  "settingsUserFolderHelp": "Where the game keeps its user data (the folder that contains \"current\").",
+  "settingsGameBusy": "A game is starting or running, so these settings are saved and apply the next time the launcher starts.",
+  "settingsGameNotApplied": "The launcher could not use these settings: {message}",
+  "@settingsGameNotApplied": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "installTitle": "Multiplayer support",
+  "installNeeds": "{game} needs a mod loader and the BeamMP plugin before you can play together. The launcher can set them up: it downloads the loader, the plugin and the mod from BeamMP's signed list (every file is checked before it is used) and puts them in the game's folder.",
+  "@installNeeds": {
+    "placeholders": { "game": { "type": "String" } }
+  },
+  "installOutdated": "BeamMP's plugin or mod for {game} is not the current one. It is also brought up to date when the game starts.",
+  "@installOutdated": {
+    "placeholders": { "game": { "type": "String" } }
+  },
+  "installUnsupportedBuild": "This build of the game ({build}) is not one the launcher's plugin was made for. Playing together may not work until the launcher is updated.",
+  "@installUnsupportedBuild": {
+    "placeholders": { "build": { "type": "String" } }
+  },
+  "installGameMissing": "Set the game's folder first (the settings button).",
+  "installFilesMissing": "This launcher is not set up to get BeamMP's files for {game} (no list address or trusted key), so they cannot be installed.",
+  "@installFilesMissing": {
+    "placeholders": { "game": { "type": "String" } }
+  },
+  "installAction": "Install",
+  "installUpdateAction": "Update",
+  "installRunning": "Installing…",
+  "installCancel": "Cancel",
+  "installCancelled": "Installing was cancelled.",
+  "installFailedTitle": "Installing did not work.",
+  "installErrorDownload": "The download failed. Check your connection and try again.",
+  "installErrorChecksum": "The download is not the file BeamMP's list names, so it was not used.",
+  "installErrorConflict": "A winhttp.dll from another mod loader is in the game's folder. Remove it first, the launcher will not overwrite it.",
+  "installErrorNotWritable": "The game's folder cannot be changed. Run the launcher with the rights to write there.",
+  "installErrorUnsupportedBuild": "This build of the game is not one the launcher's plugin was made for.",
+  "installErrorSignature": "BeamMP's list of files could not be verified (not signed by a trusted key, or older than one already seen), so nothing was installed.",
+  "installErrorLauncherOld": "BeamMP's plugin for this build of the game needs a newer launcher. Update the launcher.",
+  "installErrorNotConfigured": "This launcher is not set up to get BeamMP's files for the game.",
+  "installErrorOther": "{message}",
+  "@installErrorOther": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "installBusy": "Wait until the game has stopped or the launcher is not busy, then try again.",
+  "installDismiss": "Dismiss",
+  "installFirstStart": "The first start of the game takes a few minutes longer.",
+  "installInstalled": "Multiplayer support is installed.",
+  "installInstalledVersion": "Multiplayer support is installed (version {version}).",
+  "@installInstalledVersion": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "installRemove": "Remove multiplayer support",
+  "installRemoveHelp": "Takes out the BeamMP plugin and mod. The mod loader stays.",
+  "installRemoving": "Removing…"
+}
