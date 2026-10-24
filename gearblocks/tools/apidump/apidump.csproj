@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Lists the types and members of GearBlocks' generated interop assemblies (namespaces, types TEXT or members FULLTYPENAME).
+       dotnet run, then the arguments: GAMEFOLDER/BepInEx/interop members SmashHammer.GearBlocks.Construction.ConstructionSerialize -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GameDir Condition="'$(GameDir)' == ''">$(HOME)/Wine/gearblocks-copy</GameDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(GameDir)/BepInEx/core/Mono.Cecil.dll" />
+  </ItemGroup>
+</Project>

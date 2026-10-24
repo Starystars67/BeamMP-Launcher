@@ -1,0 +1,7 @@
+{
+  "name": "BeamMP",
+  "desc": "BeamMP multiplayer for GearBlocks: shows the room the BeamMP launcher is in (the room code and who is there). Needs the BeamMP plugin and the launcher.",
+  "tags": [
+    "multiplayer"
+  ]
+}
