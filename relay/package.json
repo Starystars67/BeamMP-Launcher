@@ -1,0 +1,12 @@
+{
+  "name": "beammp-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BeamMP relay: rooms that players join through BeamMP, for games without a dedicated server (GearBlocks first).",
+  "type": "module",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test \"test/*.test.ts\""
+  }
+}
