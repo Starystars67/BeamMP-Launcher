@@ -4,7 +4,6 @@
  SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
-#include "zip_file.h"
 #include <charconv>
 #include <cstring>
 #include <httplib.h>
@@ -76,9 +75,9 @@ Version::Version(const std::array<uint8_t, 3>& v)
 
 beammp_fs_string GetEN() {
 #if defined(_WIN32)
-    return L"BeamMP-Launcher.exe";
+    return Utils::ToWString(BEAMMP_EXECUTABLE_NAME) + L".exe";
 #elif (defined(__linux__) || defined(__APPLE__))
-    return "BeamMP-Launcher";
+    return BEAMMP_EXECUTABLE_NAME;
 #endif
 }
 
@@ -132,7 +131,9 @@ void ReLaunch() {
         Arg += L" ";
     }
     info("Relaunch!");
-    system("cls");
+    if (!options.headless) {
+        system("cls");
+    }
     ShellExecuteW(nullptr, L"runas", (GetBP() / GetEN()).c_str(), Arg.c_str(), nullptr, SW_SHOWNORMAL);
     ShowWindow(GetConsoleWindow(), 0);
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -157,7 +158,9 @@ void ReLaunch() {
         Arg += " ";
     }
     info("Relaunch!");
-    system("clear");
+    if (!options.headless) {
+        system("clear");
+    }
     int ret = execv((GetBP() / GetEN()).c_str(), const_cast<char**>(options.argv));
     if (ret < 0) {
         error(std::string("execv() failed with: ") + strerror(errno) + ". Failed to relaunch");

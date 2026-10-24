@@ -6,6 +6,8 @@
 
 
 #include <filesystem>
+#include "Games/GameModule.h"
+#include "Options.h"
 #include "Utils.h"
 #if defined(_WIN32)
 #include <shlobj_core.h>
@@ -29,9 +31,22 @@ beammp_fs_string GameDir;
 void lowExit(int code) {
     TraceBack = 0;
     std::string msg = "Failed to find the game please launch it. Report this if the issue persists code ";
+    if (options.controlled()) {
+        // Only this game is missing: the engine reports it and goes on (other games, signing in).
+        throw Games::GameNotFound(msg + std::to_string(code));
+    }
     error(msg + std::to_string(code));
     std::this_thread::sleep_for(std::chrono::seconds(10));
     exit(2);
+}
+
+void SetGameDir(const std::filesystem::path& dir) {
+    // like the detection leaves it: with a trailing separator, GetGameDir() cuts that off again
+    GameDir = (dir / "").native();
+}
+
+void ClearGameDir() {
+    GameDir.clear();
 }
 
 beammp_fs_string GetGameDir() {

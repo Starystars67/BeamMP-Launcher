@@ -9,6 +9,33 @@
 #include "Logger.h"
 #include <cstdlib>
 #include <filesystem>
+#include <string_view>
+
+bool IsHeadlessRequested(int argc, const char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        std::string_view argument(argv[i]);
+        if (argument == "--" || argument == "--game") {
+            break;
+        }
+        if (argument == "--headless" || argument == "--control-port") {
+            return true;
+        }
+    }
+    return false;
+}
+
+// The token is removed from the environment so the game does not inherit it.
+static void ReadControlToken(Options& options) {
+    const char* token = std::getenv("BEAMMP_CONTROL_TOKEN");
+    if (token) {
+        options.control_token = token;
+#if defined(_WIN32)
+        _putenv_s("BEAMMP_CONTROL_TOKEN", "");
+#else
+        unsetenv("BEAMMP_CONTROL_TOKEN");
+#endif
+    }
+}
 
 void InitOptions(int argc, const char *argv[], Options &options) {
     int i = 1;
@@ -81,6 +108,22 @@ void InitOptions(int argc, const char *argv[], Options &options) {
             options.no_update = true;
         } else if (argument == "--no-launch") {
             options.no_launch = true;
+        } else if (argument == "--headless") {
+            options.headless = true;
+        } else if (argument == "--no-browser") {
+            options.no_browser = true;
+        } else if (argument == "--control-port") {
+            int port = -1;
+            try {
+                port = i + 1 < argc ? std::stoi(argv[i + 1]) : -1;
+            } catch (const std::exception&) { }
+            if (port < 0 || port > 65535) {
+                error("The `--control-port` argument needs a port between 0 and 65535, the control channel stays off");
+            } else {
+                options.control_port = port;
+                options.headless = true;
+            }
+            i++;
         } else if (argument == "--dev") {
             options.verbose = true;
             options.no_download = true;
@@ -91,6 +134,49 @@ void InitOptions(int argc, const char *argv[], Options &options) {
                 error("You must specify a path after the `--user-path` argument");
             }
             options.user_path = argv[i + 1];
+            i++;
+        } else if (argument == "--relay") {
+            if (i + 1 >= argc) {
+                error("You must specify host:port after the `--relay` argument");
+            } else {
+                options.relay = argv[i + 1];
+            }
+            i++;
+        } else if (argument == "--gearblocks-manifest") {
+            if (i + 1 >= argc) {
+                error("You must specify an address after the `--gearblocks-manifest` argument");
+            } else {
+                options.gearblocks_manifest = argv[i + 1];
+            }
+            i++;
+        } else if (argument == "--gearblocks-trust") {
+            if (i + 1 >= argc) {
+                error("You must specify a file after the `--gearblocks-trust` argument");
+            } else {
+                options.gearblocks_trust = argv[i + 1];
+            }
+            i++;
+        } else if (argument == "--gearblocks-allow-loopback-http") {
+            options.gearblocks_allow_loopback_http = true;
+        } else if (argument == "--relay-insecure") {
+            options.relay_insecure = true;
+        } else if (argument == "--game-dir" || argument == "--game-command" || argument == "--game-user-path") {
+            // <id>=<value>
+            std::string value = i + 1 < argc ? argv[i + 1] : "";
+            size_t equals = value.find('=');
+            if (equals == std::string::npos || equals == 0 || equals + 1 >= value.size()) {
+                error("The `" + argument + "` argument needs <game>=<value>, for example beamng=/path");
+            } else {
+                Games::GameConfig& config = options.game_configs[value.substr(0, equals)];
+                std::string setting = value.substr(equals + 1);
+                if (argument == "--game-dir") {
+                    config.directory = setting;
+                } else if (argument == "--game-command") {
+                    config.command = setting;
+                } else {
+                    config.userPath = setting;
+                }
+            }
             i++;
         } else if (argument == "--" || argument == "--game") {
             options.game_arguments = &argv[i + 1];
@@ -106,8 +192,20 @@ void InitOptions(int argc, const char *argv[], Options &options) {
                 "\t--no-download        Skip downloading and installing the BeamMP Lua mod\n"
                 "\t--no-update          Skip applying launcher updates (you must update manually)\n"
                 "\t--no-launch          Skip launching the game (you must launch the game manually)\n"
+                "\t--headless           No console output, log to Launcher.log only\n"
+                "\t--no-browser         Do not open the sign-in page in the browser (the controller is told its address)\n"
+                "\t--control-port <n>   Serve the launcher UI protocol on 127.0.0.1:<n> (0 = any free port), implies --headless.\n"
+                "\t                     The access token is read from the BEAMMP_CONTROL_TOKEN environment variable\n"
                 "\t--dev                Developer mode, same as --verbose --no-download --no-launch --no-update\n"
                 "\t--user-path <path>   Path to BeamNG's User Path\n"
+                "\t--gearblocks-manifest <url>  The signed list of BeamMP's GearBlocks files (https; the signature is at <url>.sig); BEAMMP_GEARBLOCKS_MANIFEST does the same\n"
+                "\t--gearblocks-trust <file>    Public keys the list may be signed by (`ed25519:<base64>` per line); BEAMMP_GEARBLOCKS_TRUST does the same\n"
+                "\t--gearblocks-allow-loopback-http  Development: take the list and the files over http from this machine\n"
+                "\t--relay <host:port>        The BeamMP relay players meet through (rooms); BEAMMP_RELAY does the same\n"
+                "\t--relay-insecure           Allow a relay over the internet without TLS (the launcher has no TLS for it yet)\n"
+                "\t--game-dir <id>=<path>        Folder of a game (beamng, gearblocks) instead of looking for it in Steam\n"
+                "\t--game-command <id>=<prog>   Program that starts a game instead of its executable (e.g. a Wine script); it gets <ID>_DIR\n"
+                "\t--game-user-path <id>=<path> A game's user data folder (beamng: the one that contains `current`)\n"
                 "\t--game <args...>     Passes ALL following arguments to the game, see also `--`\n"
                 << std::flush;
             exit(0);
@@ -116,5 +214,9 @@ void InitOptions(int argc, const char *argv[], Options &options) {
         }
 
         i++;
+    }
+
+    if (options.controlled()) {
+        ReadControlToken(options);
     }
 }

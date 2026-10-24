@@ -40,14 +40,7 @@ extern int TraceBack;
 std::set<std::string>* ConfList = nullptr;
 bool TCPTerminate = false;
 bool Terminate = false;
-bool LoginAuth = false;
-std::string Username = "";
-std::string UserRole = "";
-int UserID = -1;
-std::string UlStatus;
-std::string MStatus;
 bool ModLoaded;
-int ping = -1;
 SOCKET CoreSocket = -1;
 signed char confirmed = -1;
 
@@ -294,7 +287,9 @@ void Parse(std::string Data, SOCKET CSocket) {
         }
         if (SubCode == 'G') {
             debug("Closing via 'G' packet");
-            exit(2);
+            if (!options.controlled()) {
+                exit(2);
+            }
         }
         Data.clear();
         break;
@@ -310,17 +305,18 @@ void Parse(std::string Data, SOCKET CSocket) {
         break;
     case 'N':
         if (SubCode == 'c') {
+            Account Current = GetAccount();
             nlohmann::json Auth = {
-                { "Auth", LoginAuth ? 1 : 0 },
+                { "Auth", Current.authenticated ? 1 : 0 },
             };
-            if (!Username.empty()) {
-                Auth["username"] = Username;
+            if (!Current.username.empty()) {
+                Auth["username"] = Current.username;
             }
-            if (!UserRole.empty()) {
-                Auth["role"] = UserRole;
+            if (!Current.role.empty()) {
+                Auth["role"] = Current.role;
             }
-            if (UserID != -1) {
-                Auth["id"] = UserID;
+            if (Current.id != -1) {
+                Auth["id"] = Current.id;
             }
             Data = "N" + Auth.dump();
         } else {

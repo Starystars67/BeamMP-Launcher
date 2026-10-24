@@ -5,8 +5,34 @@
 */
 
 #pragma once
+#include <chrono>
+#include <cstddef>
+#include <functional>
 #include <iostream>
 #include <string>
+
+enum class LogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Fatal,
+    Except,
+};
+
+struct LogRecord {
+    LogLevel level;
+    std::chrono::system_clock::time_point time;
+    std::string message;
+};
+
+// Called under the logger lock for every record, debug included: must be quick and must not log.
+using LogSink = std::function<void(const LogRecord&)>;
+
+using LogSinkId = size_t;
+
+LogSinkId AddLogSink(LogSink sink);
+void RemoveLogSink(LogSinkId id);
 void InitLog();
 void except(const std::string& toPrint);
 void fatal(const std::string& toPrint);

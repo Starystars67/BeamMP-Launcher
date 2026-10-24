@@ -5,4 +5,8 @@
 */
 
 #pragma once
-extern unsigned long GamePID;
+
+#include <filesystem>
+
+// Scratch directory the launcher's GetEP() points at while testing.
+std::filesystem::path TestDirectory();

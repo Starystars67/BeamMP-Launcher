@@ -10,13 +10,20 @@
 #include "Utils.h"
 #include <chrono>
 #include <fstream>
+#include <map>
+#include <mutex>
 #include <sstream>
 #include <thread>
 #include "Options.h"
 
-std::string getDate() {
-    time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    tm local_tm = *localtime(&tt);
+static std::string FormatDate(std::chrono::system_clock::time_point time) {
+    time_t tt = std::chrono::system_clock::to_time_t(time);
+    tm local_tm {};
+#if defined(_WIN32)
+    localtime_s(&local_tm, &tt);
+#else
+    localtime_r(&tt, &local_tm);
+#endif
     std::stringstream date;
     int S = local_tm.tm_sec;
     int M = local_tm.tm_min;
@@ -34,6 +41,9 @@ std::string getDate() {
         << Secs
         << "] ";
     return date.str();
+}
+std::string getDate() {
+    return FormatDate(std::chrono::system_clock::now());
 }
 void InitLog() {
     std::ofstream LFS;
@@ -55,75 +65,127 @@ void addToLog(const std::wstring& Line) {
     LFS << Line.c_str();
     LFS.close();
 }
-void info(const std::string& toPrint) {
-    std::string Print = getDate() + "[INFO] " + toPrint + "\n";
-    beammp_stdout << Utils::ToWString(Print);
-    addToLog(Print);
+
+namespace {
+std::mutex LogMutex;
+std::map<LogSinkId, LogSink> LogSinks;
+LogSinkId LastSinkId = 0;
+
+const char* LevelTag(LogLevel level) {
+    switch (level) {
+    case LogLevel::Debug:
+        return "DEBUG";
+    case LogLevel::Info:
+        return "INFO";
+    case LogLevel::Warn:
+        return "WARN";
+    case LogLevel::Error:
+        return "ERROR";
+    case LogLevel::Fatal:
+        return "FATAL";
+    case LogLevel::Except:
+        return "EXCEP";
+    }
+    return "INFO";
 }
-void debug(const std::string& toPrint) {
-    std::string Print = getDate() + "[DEBUG] " + toPrint + "\n";
-    if (options.verbose) {
+
+bool ShouldPrint(LogLevel level) {
+    return !options.headless && (level != LogLevel::Debug || options.verbose);
+}
+
+void NotifySinks(const LogRecord& record) {
+    for (const auto& sink : LogSinks) {
+        sink.second(record);
+    }
+}
+
+void Emit(LogLevel level, const std::string& message) {
+    auto now = std::chrono::system_clock::now();
+    std::string Print = FormatDate(now) + "[" + LevelTag(level) + "] " + message + "\n";
+    std::lock_guard<std::mutex> lock(LogMutex);
+    if (ShouldPrint(level)) {
         beammp_stdout << Utils::ToWString(Print);
     }
     addToLog(Print);
+    NotifySinks({ level, now, message });
+}
+
+#ifdef _WIN32
+std::string ToUtf8(const std::wstring& wide) {
+    if (wide.empty()) {
+        return {};
+    }
+    int size = WideCharToMultiByte(CP_UTF8, 0, wide.data(), (int)wide.size(), nullptr, 0, nullptr, nullptr);
+    std::string result(size, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wide.data(), (int)wide.size(), result.data(), size, nullptr, nullptr);
+    return result;
+}
+
+void Emit(LogLevel level, const std::wstring& message) {
+    auto now = std::chrono::system_clock::now();
+    std::wstring Print = Utils::ToWString(FormatDate(now)) + L"[" + Utils::ToWString(LevelTag(level)) + L"] " + message + L"\n";
+    std::lock_guard<std::mutex> lock(LogMutex);
+    if (ShouldPrint(level)) {
+        std::wcout << Print;
+    }
+    addToLog(Print);
+    if (!LogSinks.empty()) {
+        NotifySinks({ level, now, ToUtf8(message) });
+    }
+}
+#endif
+}
+
+LogSinkId AddLogSink(LogSink sink) {
+    std::lock_guard<std::mutex> lock(LogMutex);
+    LogSinks.emplace(++LastSinkId, std::move(sink));
+    return LastSinkId;
+}
+void RemoveLogSink(LogSinkId id) {
+    std::lock_guard<std::mutex> lock(LogMutex);
+    LogSinks.erase(id);
+}
+void info(const std::string& toPrint) {
+    Emit(LogLevel::Info, toPrint);
+}
+void debug(const std::string& toPrint) {
+    Emit(LogLevel::Debug, toPrint);
 }
 void warn(const std::string& toPrint) {
-    std::string Print = getDate() + "[WARN] " + toPrint + "\n";
-    beammp_stdout << Utils::ToWString(Print);
-    addToLog(Print);
+    Emit(LogLevel::Warn, toPrint);
 }
 void error(const std::string& toPrint) {
-    std::string Print = getDate() + "[ERROR] " + toPrint + "\n";
-    beammp_stdout << Utils::ToWString(Print);
-    addToLog(Print);
+    Emit(LogLevel::Error, toPrint);
 }
 void fatal(const std::string& toPrint) {
-    std::string Print = getDate() + "[FATAL] " + toPrint + "\n";
-    beammp_stdout << Utils::ToWString(Print);
-    addToLog(Print);
+    Emit(LogLevel::Fatal, toPrint);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     std::exit(1);
 }
 void except(const std::string& toPrint) {
-    std::string Print = getDate() + "[EXCEP] " + toPrint + "\n";
-    beammp_stdout << Utils::ToWString(Print);
-    addToLog(Print);
+    Emit(LogLevel::Except, toPrint);
 }
 
 
 #ifdef _WIN32
 void info(const std::wstring& toPrint) {
-    std::wstring Print = Utils::ToWString(getDate()) + L"[INFO] " + toPrint + L"\n";
-    std::wcout << Print;
-    addToLog(Print);
+    Emit(LogLevel::Info, toPrint);
 }
 void debug(const std::wstring& toPrint) {
-    std::wstring Print = Utils::ToWString(getDate()) + L"[DEBUG] " + toPrint + L"\n";
-    if (options.verbose) {
-        std::wcout << Print;
-    }
-    addToLog(Print);
+    Emit(LogLevel::Debug, toPrint);
 }
 void warn(const std::wstring& toPrint) {
-    std::wstring Print = Utils::ToWString(getDate()) + L"[WARN] " + toPrint + L"\n";
-    std::wcout << Print;
-    addToLog(Print);
+    Emit(LogLevel::Warn, toPrint);
 }
 void error(const std::wstring& toPrint) {
-    std::wstring Print = Utils::ToWString(getDate()) + L"[ERROR] " + toPrint + L"\n";
-    std::wcout << Print;
-    addToLog(Print);
+    Emit(LogLevel::Error, toPrint);
 }
 void fatal(const std::wstring& toPrint) {
-    std::wstring Print = Utils::ToWString(getDate()) + L"[FATAL] " + toPrint + L"\n";
-    std::wcout << Print;
-    addToLog(Print);
+    Emit(LogLevel::Fatal, toPrint);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     std::exit(1);
 }
 void except(const std::wstring& toPrint) {
-    std::wstring Print = Utils::ToWString(getDate()) + L"[EXCEP] " + toPrint + L"\n";
-    std::wcout << Print;
-    addToLog(Print);
+    Emit(LogLevel::Except, toPrint);
 }
 #endif

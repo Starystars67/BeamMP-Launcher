@@ -19,8 +19,11 @@ find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 
+set(BEAMMP_EXECUTABLE_NAME "BeamMP-Launcher" CACHE STRING "Executable name, without extension")
+
 add_executable(${PROJECT_NAME} ${source_files})
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "BeamMP-Launcher")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${BEAMMP_EXECUTABLE_NAME}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "BEAMMP_EXECUTABLE_NAME=\"${BEAMMP_EXECUTABLE_NAME}\"")
 
 if (WIN32)
     find_package(ZLIB REQUIRED)
@@ -45,3 +48,9 @@ else(WIN32) #MINGW
     target_link_libraries(${PROJECT_NAME} ssl crypto ws2_32 ssp crypt32 z CURL::libcurl)
 endif(WIN32)
 target_include_directories(${PROJECT_NAME} PRIVATE "include")
+
+option(BEAMMP_BUILD_TESTS "Build the unit tests" OFF)
+if (BEAMMP_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

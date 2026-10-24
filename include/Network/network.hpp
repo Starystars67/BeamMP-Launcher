@@ -6,6 +6,7 @@
 
 
 #pragma once
+#include "Status.h"
 #include <filesystem>
 #include <string>
 
@@ -23,7 +24,6 @@
 
 void NetReset();
 extern bool Dev;
-extern int ping;
 
 [[noreturn]] void CoreNetwork();
 extern int ProxyPort;
@@ -38,8 +38,6 @@ extern std::filesystem::path CachingDirectory;
 extern bool deleteDuplicateMods;
 extern bool TCPTerminate;
 extern std::string LastIP;
-extern std::string MStatus;
-extern std::string UlStatus;
 extern std::string PublicKey;
 extern std::string PrivateKey;
 extern std::string magic;

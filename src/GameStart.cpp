@@ -4,6 +4,7 @@
  SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
+#include <csignal>
 #include <cstring>
 #include "Utils.h"
 #if defined(_WIN32)
@@ -20,16 +21,17 @@ extern char** environ; // not declared by unistd.h on macOS
 #endif
 #endif
 
+#include "Control/Lifecycle.h"
 #include "Logger.h"
 #include "Options.h"
 #include "Startup.h"
+#include "Status.h"
 #include <Security/Init.h>
 #include <filesystem>
 #include <thread>
 
 #include <fstream>
 
-unsigned long GamePID = 0;
 #if defined(_WIN32)
 std::wstring QueryKey(HKEY hKey, int ID);
 std::filesystem::path GetGamePath() {
@@ -140,56 +142,84 @@ std::filesystem::path GetGamePath() {
 }
 #endif
 
+namespace {
+struct GameResult {
+    bool launched = false;
+    int exit_code = 0;
+    std::string error;
+};
+
+std::vector<std::string> ConsoleGameArguments() {
+    return std::vector<std::string>(options.game_arguments, options.game_arguments + options.game_arguments_length);
+}
+}
+
+// Starts the game and blocks until it exits.
 #if defined(_WIN32)
-void StartGame(std::wstring Dir) {
-    BOOL bSuccess = FALSE;
+static GameResult RunGame(const std::wstring& Dir, const std::vector<std::string>& args) {
+    GameResult result;
     PROCESS_INFORMATION pi;
     STARTUPINFOW si = { 0 };
     si.cb = sizeof(si);
     std::wstring BaseDir = Dir; //+"\\Bin64";
     // Dir += R"(\Bin64\BeamNG.drive.x64.exe)";
-    Dir += L"\\BeamNG.drive.exe";
-    std::wstring gameArgs = L"";
+    std::wstring Command = Dir + L"\\BeamNG.drive.exe";
 
-    for (int i = 0; i < options.game_arguments_length; i++) {
-        gameArgs += L" ";
-        gameArgs += Utils::ToWString(options.game_arguments[i]);
+    debug(L"BeamNG executable path: " + Command);
+
+    for (const auto& arg : args) {
+        Command += L" ";
+        Command += Utils::ToWString(arg);
     }
 
-    debug(L"BeamNG executable path: " + Dir);
-
-    bSuccess = CreateProcessW(nullptr, (wchar_t*)(Dir + gameArgs).c_str(), nullptr, nullptr, TRUE, 0, nullptr, BaseDir.c_str(), &si, &pi);
-    if (bSuccess) {
+    if (CreateProcessW(nullptr, Command.data(), nullptr, nullptr, TRUE, 0, nullptr, BaseDir.c_str(), &si, &pi)) {
         info("Game Launched!");
         GamePID = pi.dwProcessId;
+        GetLifecycle().Set(EngineState::GameRunning);
         WaitForSingleObject(pi.hProcess, INFINITE);
-        error("Game Closed! launcher closing soon");
+        DWORD code = 0;
+        GetExitCodeProcess(pi.hProcess, &code);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        GamePID = 0;
+        result.launched = true;
+        result.exit_code = static_cast<int>(code);
     } else {
-        std::string err = "";
-
         DWORD dw = GetLastError();
         LPVOID lpErrorMsgBuffer;
 
         if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw,
                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpErrorMsgBuffer, 0, nullptr)
             == 0) {
-            err = "Unknown error code: " + std::to_string(dw);
+            result.error = "Unknown error code: " + std::to_string(dw);
         } else {
-            err = "Error " + std::to_string(dw) + ": " + (char*)lpErrorMsgBuffer;
+            result.error = "Error " + std::to_string(dw) + ": " + (char*)lpErrorMsgBuffer;
         }
-
-        error("Failed to Launch the game! launcher closing soon. " + err);
     }
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    exit(2);
+    return result;
+}
+
+bool StopGame() {
+    unsigned long pid = GamePID;
+    if (pid == 0) {
+        return false;
+    }
+    HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    if (!process) {
+        return false;
+    }
+    BOOL stopped = TerminateProcess(process, 1);
+    CloseHandle(process);
+    return stopped;
 }
 #elif (defined(__linux__) || defined(__APPLE__))
-void StartGame(std::string Dir) {
+static GameResult RunGame(const std::string& Dir, const std::vector<std::string>& args) {
+    GameResult result;
     std::string filename = (Dir + "/BinLinux/BeamNG.drive.x64");
     std::vector<const char*> argv;
     argv.push_back(filename.data());
-    for (int i = 0; i < options.game_arguments_length; i++) {
-        argv.push_back(options.game_arguments[i]);
+    for (const auto& arg : args) {
+        argv.push_back(arg.c_str());
     }
 
     argv.push_back(nullptr);
@@ -211,23 +241,61 @@ void StartGame(std::string Dir) {
     }
 
     // launch the game
-    int result = posix_spawn(&pid, filename.c_str(), &file_actions, NULL, const_cast<char**>(argv.data()), environ);
+    int spawned = posix_spawn(&pid, filename.c_str(), &file_actions, NULL, const_cast<char**>(argv.data()), environ);
+    posix_spawn_file_actions_destroy(&file_actions);
 
-    if (result != 0) {
-        error("Failed to Launch the game! launcher closing soon");
-        return;
-    } else {
-        waitpid(pid, &status, 0);
-        error("Game Closed! launcher closing soon");
+    if (spawned != 0) {
+        result.error = std::strerror(spawned);
+        return result;
     }
+    GamePID = static_cast<unsigned long>(pid);
+    GetLifecycle().Set(EngineState::GameRunning);
+    int wait_status = 0;
+    while (waitpid(pid, &wait_status, 0) == -1 && errno == EINTR) { }
+    GamePID = 0;
+    result.launched = true;
+    result.exit_code = WIFEXITED(wait_status) ? WEXITSTATUS(wait_status) : 128 + WTERMSIG(wait_status);
+    return result;
+}
 
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    exit(2);
+bool StopGame() {
+    unsigned long pid = GamePID;
+    return pid != 0 && kill(static_cast<pid_t>(pid), SIGTERM) == 0;
 }
 #endif
 
+static void StartGame(beammp_fs_string Dir) {
+    GameResult result = RunGame(Dir, ConsoleGameArguments());
+    if (result.launched) {
+        error("Game Closed! launcher closing soon");
+    } else {
+        error("Failed to Launch the game! launcher closing soon. " + result.error);
+#if (defined(__linux__) || defined(__APPLE__))
+        return; // the launcher has always kept running when the spawn fails here
+#endif
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    exit(2);
+}
+
+void LaunchGame(const std::vector<std::string>& args) {
+    std::thread([Dir = GetGameDir(), args] {
+        GameResult result = RunGame(Dir, args);
+        std::string detail;
+        if (result.launched) {
+            detail = "The game exited with code " + std::to_string(result.exit_code);
+            info(detail);
+        } else {
+            detail = "Failed to launch the game: " + result.error;
+            error(detail);
+        }
+        GetLifecycle().Set(EngineState::Ready, detail);
+    }).detach();
+}
+
 void InitGame(const beammp_fs_string& Dir) {
-    if (!options.no_launch) {
+    if (!options.no_launch && !options.controlled()) {
+        GetLifecycle().Set(EngineState::LaunchingGame);
         std::thread Game(StartGame, Dir);
         Game.detach();
     }

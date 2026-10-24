@@ -14,3 +14,10 @@ compile_commands.json
 key
 out/
 build-macos/
+
+# build output and test leftovers
+obj/
+/ui/packages/*/build/
+/ui/test/failures/
+.dart_tool/
+.DS_Store

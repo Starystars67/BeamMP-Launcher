@@ -5,8 +5,10 @@
 */
 
 
+#include "Auth/Runtime.h"
 #include "Http.h"
 #include "Logger.h"
+#include "Status.h"
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -14,10 +16,21 @@
 namespace fs = std::filesystem;
 std::string PublicKey;
 std::string PrivateKey;
-extern bool LoginAuth;
-extern std::string Username;
-extern std::string UserRole;
-extern int UserID;
+
+static void SetAuthenticated(const nlohmann::json& d) {
+    Account Current = GetAccount();
+    Current.authenticated = true;
+    if (d.contains("username")) {
+        Current.username = d["username"].get<std::string>();
+    }
+    if (d.contains("role")) {
+        Current.role = d["role"].get<std::string>();
+    }
+    if (d.contains("id")) {
+        Current.id = d["id"].get<int>();
+    }
+    SetAccount(std::move(Current));
+}
 
 void UpdateKey(const char* newKey) {
     if (newKey && std::isalnum(newKey[0])) {
@@ -46,10 +59,10 @@ std::string GetFail(const std::string& R) {
 
 std::string Login(const std::string& fields) {
     if (fields == "LO") {
-        Username = "";
-        UserRole = "";
-        UserID = -1;
-        LoginAuth = false;
+        if (auto* auth = ActiveAuth(); auth && auth->SignedIn()) {
+            auth->SignOut();
+        }
+        SetAccount({});
         UpdateKey(nullptr);
         return "";
     }
@@ -68,16 +81,7 @@ std::string Login(const std::string& fields) {
             return GetFail("Invalid answer from authentication servers, please try again later!");
         }
         if (d.contains("success") && d["success"].get<bool>()) {
-            LoginAuth = true;
-            if (d.contains("username")) {
-                Username = d["username"].get<std::string>();
-            }
-            if (d.contains("role")) {
-                UserRole = d["role"].get<std::string>();
-            }
-            if (d.contains("id")) {
-                UserID = d["id"].get<int>();
-            }
+            SetAuthenticated(d);
             if (d.contains("private_key")) {
                 UpdateKey(d["private_key"].get<std::string>().c_str());
             }
@@ -100,6 +104,11 @@ std::string Login(const std::string& fields) {
 }
 
 void CheckLocalKey() {
+    // A sign-in through the browser needs no key file: the game keys are single
+    // use per server join, so they are renewed from the session instead.
+    if (auto* auth = ActiveAuth(); auth && auth->Renew()) {
+        return;
+    }
     if (fs::exists("key") && fs::file_size("key") < 100) {
         std::ifstream Key("key");
         if (Key.is_open()) {
@@ -125,18 +134,9 @@ void CheckLocalKey() {
                 UpdateKey(nullptr);
             }
             if (d["success"].get<bool>()) {
-                LoginAuth = true;
+                SetAuthenticated(d);
                 UpdateKey(d["private_key"].get<std::string>().c_str());
                 PublicKey = d["public_key"].get<std::string>();
-                if (d.contains("username")) {
-                    Username = d["username"].get<std::string>();
-                }
-                if (d.contains("role")) {
-                    UserRole = d["role"].get<std::string>();
-                }
-                if (d.contains("id")) {
-                    UserID = d["id"].get<int>();
-                }
             } else {
                 info("Auto-Authentication unsuccessful please re-login!");
                 UpdateKey(nullptr);
